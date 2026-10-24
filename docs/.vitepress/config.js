@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import { tabsMarkdownPlugin } from "vitepress-plugin-tabs";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -8,6 +9,7 @@ export default defineConfig({
   ignoreDeadLinks: true,
   cleanUrls: true,
   base: '/vitepress-demo/',
+  
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
@@ -27,6 +29,16 @@ export default defineConfig({
 
     socialLinks: [
       { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
-    ]
+    ],
+    
+    search: {
+			provider: "local",
+		},
+
+    markdown: {
+		config(md) {
+			md.use(tabsMarkdownPlugin);
+		},
+	}
   }
 })
