@@ -29,14 +29,12 @@ publish = ".next"
 ```javascript
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "example.com" },
-    ],
-  },
-};
+    images: {
+        remotePatterns: [{ protocol: 'https', hostname: 'example.com' }],
+    },
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig
 ```
 
 Remote image patterns in `next.config.js` are automatically mapped to Netlify Image CDN's `remote_images` configuration.
@@ -50,12 +48,12 @@ On Next.js **earlier than 14.1.4** the env var is not sufficient on its own; add
 ```javascript
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    useDeploymentId: true,
-    // only needed when using Server Actions
-    useDeploymentIdServerActions: true,
-  },
-};
+    experimental: {
+        useDeploymentId: true,
+        // only needed when using Server Actions
+        useDeploymentIdServerActions: true,
+    },
+}
 ```
 
 Client `fetch` calls are not covered automatically by default, so those requests hit the current deploy. Two ways to change that:
@@ -70,12 +68,12 @@ Next.js API routes work automatically — they are deployed as Netlify Functions
 ```typescript
 // app/api/items/route.ts (App Router)
 export async function GET() {
-  return Response.json({ items: [] });
+    return Response.json({ items: [] })
 }
 
 export async function POST(request: Request) {
-  const data = await request.json();
-  return Response.json({ created: data }, { status: 201 });
+    const data = await request.json()
+    return Response.json({ created: data }, { status: 201 })
 }
 ```
 
@@ -85,12 +83,12 @@ Next.js middleware is deployed as a Netlify Edge Function:
 
 ```typescript
 // middleware.ts
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  // Runs at the edge on Netlify
-  return NextResponse.next();
+    // Runs at the edge on Netlify
+    return NextResponse.next()
 }
 ```
 

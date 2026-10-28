@@ -12,13 +12,13 @@ npm install -D @sveltejs/adapter-netlify
 
 ```javascript
 // svelte.config.js
-import adapter from "@sveltejs/adapter-netlify";
+import adapter from '@sveltejs/adapter-netlify'
 
 export default {
-  kit: {
-    adapter: adapter(),
-  },
-};
+    kit: {
+        adapter: adapter(),
+    },
+}
 ```
 
 ## What the Adapter Does
@@ -32,7 +32,7 @@ export default {
 Pass `edge: true` to deploy the SSR handler as a Netlify **Edge Function** instead of a serverless Function:
 
 ```javascript
-adapter({ edge: true });
+adapter({ edge: true })
 ```
 
 ## Environment Variables

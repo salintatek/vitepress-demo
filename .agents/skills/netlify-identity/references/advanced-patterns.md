@@ -5,16 +5,21 @@
 Three-step flow: request recovery email, handle the callback, then set a new password.
 
 ```typescript
-import { requestPasswordRecovery, handleAuthCallback, updateUser, AuthError } from '@netlify/identity'
+import {
+    requestPasswordRecovery,
+    handleAuthCallback,
+    updateUser,
+    AuthError,
+} from '@netlify/identity'
 
 // Step 1: Send recovery email
 async function handleForgotPassword(email: string) {
-  try {
-    await requestPasswordRecovery(email)
-    showSuccess('Check your email for a password reset link.')
-  } catch (error) {
-    if (error instanceof AuthError) showError(error.message)
-  }
+    try {
+        await requestPasswordRecovery(email)
+        showSuccess('Check your email for a password reset link.')
+    } catch (error) {
+        if (error instanceof AuthError) showError(error.message)
+    }
 }
 
 // Step 2: handleAuthCallback() returns { type: 'recovery', user } — show password reset form
@@ -22,12 +27,12 @@ async function handleForgotPassword(email: string) {
 
 // Step 3: Set new password
 async function handlePasswordReset(newPassword: string) {
-  try {
-    await updateUser({ password: newPassword })
-    showSuccess('Password updated.')
-  } catch (error) {
-    if (error instanceof AuthError) showError(error.message)
-  }
+    try {
+        await updateUser({ password: newPassword })
+        showSuccess('Password updated.')
+    } catch (error) {
+        if (error instanceof AuthError) showError(error.message)
+    }
 }
 ```
 
@@ -41,12 +46,12 @@ When a user clicks an invite link, `handleAuthCallback()` returns `{ type: 'invi
 import { acceptInvite, AuthError } from '@netlify/identity'
 
 async function handleAcceptInvite(token: string, password: string) {
-  try {
-    const user = await acceptInvite(token, password)
-    showSuccess(`Welcome, ${user.email}! Your account is ready.`)
-  } catch (error) {
-    if (error instanceof AuthError) showError(error.message)
-  }
+    try {
+        const user = await acceptInvite(token, password)
+        showSuccess(`Welcome, ${user.email}! Your account is ready.`)
+    } catch (error) {
+        if (error instanceof AuthError) showError(error.message)
+    }
 }
 ```
 
@@ -74,7 +79,7 @@ import { hydrateSession } from '@netlify/identity'
 
 const user = await hydrateSession()
 if (user) {
-  // Browser session is now in sync with server-set cookies
+    // Browser session is now in sync with server-set cookies
 }
 ```
 

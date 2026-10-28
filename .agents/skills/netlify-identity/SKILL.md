@@ -22,10 +22,19 @@ Framework examples (Next.js/Astro/Remix/SvelteKit) and the full API reference ar
 ## Client auth (browser)
 
 ```ts
-import { signup, login, logout, getUser, oauthLogin, handleAuthCallback } from '@netlify/identity'
+import {
+    signup,
+    login,
+    logout,
+    getUser,
+    oauthLogin,
+    handleAuthCallback,
+} from '@netlify/identity'
 
 // Register — confirmation email sent by default (unless autoconfirm is on)
-const user = await signup('jane@example.com', 'securepassword', { full_name: 'Jane Doe' })
+const user = await signup('jane@example.com', 'securepassword', {
+    full_name: 'Jane Doe',
+})
 
 // Log in / out
 await login('jane@example.com', 'securepassword')
@@ -65,9 +74,9 @@ import { getUser } from '@netlify/identity'
 import type { Context } from '@netlify/functions'
 
 export default async (req: Request, context: Context) => {
-  const user = await getUser()
-  if (!user) return new Response('Unauthorized', { status: 401 })
-  return Response.json({ id: user.id, email: user.email })
+    const user = await getUser()
+    if (!user) return new Response('Unauthorized', { status: 401 })
+    return Response.json({ id: user.id, email: user.email })
 }
 ```
 
@@ -81,11 +90,12 @@ import { getUser, admin } from '@netlify/identity'
 import type { Context } from '@netlify/functions'
 
 export default async (req: Request, context: Context) => {
-  const user = await getUser()
-  if (!user) return new Response('Unauthorized', { status: 401 })
-  if (!user.roles.includes('admin')) return new Response('Forbidden', { status: 403 })
-  const users = await admin.listUsers()
-  return Response.json({ users })
+    const user = await getUser()
+    if (!user) return new Response('Unauthorized', { status: 401 })
+    if (!user.roles.includes('admin'))
+        return new Response('Forbidden', { status: 403 })
+    const users = await admin.listUsers()
+    return Response.json({ users })
 }
 ```
 
@@ -99,10 +109,13 @@ import { login, verifyRequestOrigin } from '@netlify/identity'
 import type { Context } from '@netlify/functions'
 
 export default async (req: Request, context: Context) => {
-  verifyRequestOrigin(req)
-  const { email, password } = await req.json()
-  await login(email, password)
-  return new Response(null, { status: 302, headers: { Location: '/dashboard' } })
+    verifyRequestOrigin(req)
+    const { email, password } = await req.json()
+    await login(email, password)
+    return new Response(null, {
+        status: 302,
+        headers: { Location: '/dashboard' },
+    })
 }
 ```
 
@@ -112,35 +125,40 @@ The platform calls your handler when an Identity event occurs. Export a default 
 
 > Typed handlers (`UserSignupEvent`, `event.deny()`) require `@netlify/functions` ≥ 5.2.0. Older installs must use the legacy filename convention (`identity-signup.ts`, etc.) — see `references/authorization-and-sessions.md`.
 
-| Handler | Fires when |
-|---|---|
-| `userValidate` | Signup attempt, before account creation. Block bad signups here. |
-| `userSignup` | Signup completes (after email confirmation if enabled). Assign roles, sync, welcome. |
-| `userLogin` | User logs in. Track/last-seen/block. |
-| `userModified` | Profile updated. |
-| `userDeleted` | User deleted (notification only). |
+| Handler        | Fires when                                                                           |
+| -------------- | ------------------------------------------------------------------------------------ |
+| `userValidate` | Signup attempt, before account creation. Block bad signups here.                     |
+| `userSignup`   | Signup completes (after email confirmation if enabled). Assign roles, sync, welcome. |
+| `userLogin`    | User logs in. Track/last-seen/block.                                                 |
+| `userModified` | Profile updated.                                                                     |
+| `userDeleted`  | User deleted (notification only).                                                    |
 
 Event `user` fields are camelCase (`appMetadata`, `userMetadata`, `confirmedAt`).
 
 ```typescript
 // netlify/functions/identity.mts — deny a signup
-import type { UserValidateEvent } from "@netlify/functions"
+import type { UserValidateEvent } from '@netlify/functions'
 
 export default {
-  userValidate(event: UserValidateEvent) {
-    if (!event.user.email?.endsWith("@example.com")) return event.deny()
-  },
+    userValidate(event: UserValidateEvent) {
+        if (!event.user.email?.endsWith('@example.com')) return event.deny()
+    },
 }
 ```
 
 ```typescript
 // netlify/functions/identity.mts — assign roles at signup
-import type { UserSignupEvent } from "@netlify/functions"
+import type { UserSignupEvent } from '@netlify/functions'
 
 export default {
-  userSignup(event: UserSignupEvent) {
-    return { user: { ...event.user, appMetadata: { ...event.user.appMetadata, roles: ["member"] } } }
-  },
+    userSignup(event: UserSignupEvent) {
+        return {
+            user: {
+                ...event.user,
+                appMetadata: { ...event.user.appMetadata, roles: ['member'] },
+            },
+        }
+    },
 }
 ```
 
@@ -164,6 +182,7 @@ Deep guides for SSR/session hydration and authorization live in `references/adva
 Enforced at the edge with no origin round trip. A mismatched role gets a 404 unless you add a fallback — **always pair a role-gated rule with a fallback.**
 
 `_redirects`:
+
 ```
 /admin/*  /admin/:splat  200!  Role=admin
 /admin/*  /login         401!
@@ -172,6 +191,7 @@ Enforced at the edge with no origin round trip. A mismatched role gets a 404 unl
 ```
 
 `netlify.toml`:
+
 ```toml
 [[redirects]]
   from = "/admin/*"
@@ -200,6 +220,7 @@ Default sender is `no-reply@netlify.com`. Custom SMTP sender and custom template
 Template variables (Go syntax): `{{ .Email }}`, `{{ .NewEmail }}` (email-change only), `{{ .SiteURL }}`, `{{ .ConfirmationURL }}`, `{{ .Token }}`.
 
 Custom-link hash fragments per action:
+
 ```
 {{ .SiteURL }}/path/#invite_token={{ .Token }}
 {{ .SiteURL }}/path/#confirmation_token={{ .Token }}
@@ -230,6 +251,7 @@ Site-gating requests ("lock this site to my company", employees-only) route to t
 <!-- gap: getSettings() is referenced by house rules for provider discovery but its signature/return shape is not documented in the intermediate. -->
 
 <!-- system: agent-context/identity/system.md — human-owned, merged by ctx-gen; edit system.md, not this section -->
+
 # Netlify house rules (identity)
 
 These are org conventions, not docs facts — merged into the rendered skill by

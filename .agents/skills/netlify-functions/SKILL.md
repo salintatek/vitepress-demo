@@ -11,9 +11,9 @@ Reach for the modern default-handler API (`.mts` TypeScript). Export a default a
 
 - Default directory: `netlify/functions/` (relative to base directory). Keep it **outside** your publish directory or source files ship as static assets.
 - A function is one file or a subdirectory whose entry file is named `index` or matches the subdirectory name. All of these create a function `hello`:
-  - `netlify/functions/hello.mts`
-  - `netlify/functions/hello/hello.mts`
-  - `netlify/functions/hello/index.mts`
+    - `netlify/functions/hello.mts`
+    - `netlify/functions/hello/hello.mts`
+    - `netlify/functions/hello/index.mts`
 - Use `.mts` (TS) / `.mjs` (JS) for ES modules. `.cts`/`.cjs` force CommonJS; `.ts`/`.js` follow the nearest `package.json` `"type"`.
 
 ## Minimal function
@@ -21,10 +21,10 @@ Reach for the modern default-handler API (`.mts` TypeScript). Export a default a
 No `config` export. Serves at `/.netlify/functions/hello`.
 
 ```ts title="netlify/functions/hello.mts"
-import type { Context } from "@netlify/functions"
+import type { Context } from '@netlify/functions'
 
 export default async (req: Request, context: Context) => {
-  return new Response("Hello, world!")
+    return new Response('Hello, world!')
 }
 ```
 
@@ -33,7 +33,7 @@ Install types: `npm install @netlify/functions` (required for TS types; optional
 Read env vars and secrets with `Netlify.env.get()`:
 
 ```ts
-const apiKey = Netlify.env.get("STRIPE_SECRET_KEY")
+const apiKey = Netlify.env.get('STRIPE_SECRET_KEY')
 ```
 
 Never hardcode secrets. For the variable to exist at runtime its scope must include **Functions**. Variables set in `netlify.toml` are NOT available to functions. Values are frozen per deploy — change them and redeploy to apply.
@@ -45,15 +45,15 @@ Never hardcode secrets. For the variable to exist at runtime its scope must incl
 Set `config.path` to route to custom URLs. When set, the function serves ONLY at that path — not at `/.netlify/functions/<name>`.
 
 ```ts title="netlify/functions/travel.mts"
-import type { Config, Context } from "@netlify/functions"
+import type { Config, Context } from '@netlify/functions'
 
 export default async (req: Request, context: Context) => {
-  const { city, country } = context.params
-  return new Response(`You're visiting ${city} in ${country}!`)
+    const { city, country } = context.params
+    return new Response(`You're visiting ${city} in ${country}!`)
 }
 
 export const config: Config = {
-  path: "/travel-guide/:city/:country",
+    path: '/travel-guide/:city/:country',
 }
 ```
 
@@ -68,11 +68,11 @@ export const config: Config = {
 Equivalent to the bare handler; carries `config` inline and lets you add event handlers.
 
 ```ts
-import type { NetlifyFunction } from "@netlify/functions"
+import type { NetlifyFunction } from '@netlify/functions'
 
 export default {
-  fetch: (req, context) => new Response("Hello, world!"),
-  config: { path: "/hello" },
+    fetch: (req, context) => new Response('Hello, world!'),
+    config: { path: '/hello' },
 } satisfies NetlifyFunction
 ```
 
@@ -105,17 +105,17 @@ Export `const config` (or the `config` property of a Fetchable module):
 ## Integrations
 
 ```ts title="netlify/functions/users.mts"
-import type { Config } from "@netlify/functions"
-import { getDatabase } from "@netlify/database"
+import type { Config } from '@netlify/functions'
+import { getDatabase } from '@netlify/database'
 
 const db = getDatabase()
 
 export default async (req: Request) => {
-  const users = await db.sql`SELECT id, email FROM users LIMIT 10`
-  return Response.json({ users })
+    const users = await db.sql`SELECT id, email FROM users LIMIT 10`
+    return Response.json({ users })
 }
 
-export const config: Config = { path: "/users" }
+export const config: Config = { path: '/users' }
 ```
 
 Blobs: `import { getStore } from "@netlify/blobs"`; `getStore("uploads").set(key, await req.blob())`.
@@ -123,11 +123,11 @@ Blobs: `import { getStore } from "@netlify/blobs"`; `getStore("uploads").set(key
 `purgeCache()` from `@netlify/functions` invalidates the edge cache from inside a function:
 
 ```ts
-import { purgeCache } from "@netlify/functions"
+import { purgeCache } from '@netlify/functions'
 
 export default async () => {
-  await purgeCache({ tags: ["products"] }) // omit tags to purge all
-  return new Response("Purged!", { status: 202 })
+    await purgeCache({ tags: ['products'] }) // omit tags to purge all
+    return new Response('Purged!', { status: 202 })
 }
 ```
 
@@ -137,15 +137,21 @@ Return a `ReadableStream` as the `Response` body. Limits: **60s execution, 20 MB
 
 ```ts
 export default async (req: Request) => {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${Netlify.env.get("OPENAI_API_KEY")}`,
-    },
-    body: JSON.stringify({ model: "gpt-4o-mini", stream: true, messages: [/* ... */] }),
-  })
-  return new Response(res.body, { headers: { "content-type": "text/event-stream" } })
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${Netlify.env.get('OPENAI_API_KEY')}`,
+        },
+        body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            stream: true,
+            messages: [/* ... */],
+        }),
+    })
+    return new Response(res.body, {
+        headers: { 'content-type': 'text/event-stream' },
+    })
 }
 ```
 
@@ -156,13 +162,13 @@ To build a stream manually, `new ReadableStream({ start(controller) { controller
 `config.background: true`. Client gets an immediate `202`; the return value is discarded; runs up to **15 minutes**. No streaming. Retries: on invocation error, retry after 1 min, then again 2 min later. Send results somewhere other than the client.
 
 ```ts title="netlify/functions/process.mts"
-import type { Config } from "@netlify/functions"
+import type { Config } from '@netlify/functions'
 
 export default async (req: Request) => {
-  // Long-running work. Client already has its 202.
+    // Long-running work. Client already has its 202.
 }
 
-export const config: Config = { background: true, path: "/process" }
+export const config: Config = { background: true, path: '/process' }
 ```
 
 Limits: background payload **256 KB**. Legacy `-background` filename suffix still works but prefer `config.background`.
@@ -174,15 +180,15 @@ Limits: background payload **256 KB**. Legacy `-background` filename suffix stil
 Always compute the UTC time for the target local hour. E.g. 9 AM ET → `"0 13 * * *"` UTC (note this shifts by an hour across DST; pick the UTC offset you need). Prefer explicit cron over `@daily`/`@hourly` shortcuts, which can't target a specific local hour.
 
 ```ts title="netlify/functions/daily-digest.mts"
-import type { Config } from "@netlify/functions"
+import type { Config } from '@netlify/functions'
 
 export default async (req: Request) => {
-  const { next_run } = await req.json()
-  console.log("Next invocation at:", next_run)
+    const { next_run } = await req.json()
+    console.log('Next invocation at:', next_run)
 }
 
 export const config: Config = {
-  schedule: "0 13 * * *", // 9 AM ET (EST); UTC
+    schedule: '0 13 * * *', // 9 AM ET (EST); UTC
 }
 ```
 
@@ -200,15 +206,22 @@ Constraints: **30s limit** (use background for longer); only fire on **published
 Export a default object with handlers named after events. They always run in the background — no response to a client. Combine with `fetch` in the same function. Every handler is fully typed; import event types from `@netlify/functions`.
 
 ```ts title="netlify/functions/on-deploy.mts"
-import type { DeploySucceededEvent, DeployFailedEvent } from "@netlify/functions"
+import type {
+    DeploySucceededEvent,
+    DeployFailedEvent,
+} from '@netlify/functions'
 
 export default {
-  deploySucceeded(event: DeploySucceededEvent) {
-    console.log(`Deploy ${event.deploy.id} succeeded for ${event.site.name}`)
-  },
-  deployFailed(event: DeployFailedEvent) {
-    console.log(`Deploy ${event.deploy.id} failed: ${event.deploy.errorMessage}`)
-  },
+    deploySucceeded(event: DeploySucceededEvent) {
+        console.log(
+            `Deploy ${event.deploy.id} succeeded for ${event.site.name}`
+        )
+    },
+    deployFailed(event: DeployFailedEvent) {
+        console.log(
+            `Deploy ${event.deploy.id} failed: ${event.deploy.errorMessage}`
+        )
+    },
 }
 ```
 
@@ -216,13 +229,13 @@ export default {
 
 **Identity events** (`event.user`, only `id` guaranteed):
 
-| Handler | Can deny? | Can mutate? |
-|---|---|---|
-| `userValidate` | Yes | Yes |
-| `userSignup` | Yes | Yes |
-| `userLogin` | Yes | Yes |
-| `userModified` | Yes | Yes |
-| `userDeleted` | No | No |
+| Handler        | Can deny? | Can mutate? |
+| -------------- | --------- | ----------- |
+| `userValidate` | Yes       | Yes         |
+| `userSignup`   | Yes       | Yes         |
+| `userLogin`    | Yes       | Yes         |
+| `userModified` | Yes       | Yes         |
+| `userDeleted`  | No        | No          |
 
 - Deny: call `event.deny()` inside the handler → end user gets `401`. First function to deny aborts the chain.
 - Mutate: return `{ user: {...} }` to persist changes; return `undefined` to pass through.
@@ -238,7 +251,7 @@ Multiple functions can handle the same event (all run). Netlify signs each event
 When justified — e.g. an EU-resident database:
 
 ```ts
-export const config: Config = { path: "/eu-data", region: "dub" }
+export const config: Config = { path: '/eu-data', region: 'dub' }
 ```
 
 Airport codes (self-serve): `cmh`, `dub`, `fra`, `gru`, `iad`, `lhr`, `nrt`, `pdx`, `sfo`, `sin`, `syd`, `yul`. Support-assisted: `cdg`, `mxp`. Each function runs in exactly one region (no multi-region geo-routing). Region selection needs Pro/Enterprise. Framework-adapter-generated functions can't take `export const config` — set region at project level in the UI under **Cloud compute > Functions > Region**. After changing region, **redeploy**. Function-level region beats the site-level UI setting.
@@ -250,7 +263,7 @@ Airport codes (self-serve): `cmh`, `dub`, `fra`, `gru`, `iad`, `lhr`, `nrt`, `pd
 When justified (e.g. observed OOM processing large PDFs):
 
 ```ts
-export const config: Config = { path: "/heavy", memory: "2gb" } // or memory: 2048
+export const config: Config = { path: '/heavy', memory: '2gb' } // or memory: 2048
 ```
 
 - `memory`: 1024–4096 MB. `vcpu`: 0.5–2.0 (0.5 → 1024 MB, 2.0 → 4096 MB). Mutually exclusive; Netlify sizes the other automatically. Needs Credit-based Pro/Enterprise. Via `netlify.toml`: `[functions.heavy]\n  memory = "2gb"`.
@@ -291,18 +304,32 @@ Runtime follows the build's Node.js version (fallback: Node.js 24). Override by 
 Go must use the [Lambda-compatible API](https://docs.netlify.com/build/functions/lambda-compatibility/?fn-language=go); Go routing/region/memory are set in `netlify.toml`. For migrating Lambda-style JS/TS, `@netlify/aws-lambda-compat` wraps an AWS handler:
 
 ```ts
-import { withLambda } from "@netlify/aws-lambda-compat"
-import type { HandlerContext, HandlerEvent, HandlerResponse } from "@netlify/aws-lambda-compat"
+import { withLambda } from '@netlify/aws-lambda-compat'
+import type {
+    HandlerContext,
+    HandlerEvent,
+    HandlerResponse,
+} from '@netlify/aws-lambda-compat'
 
-export default withLambda(async (event: HandlerEvent, context: HandlerContext): Promise<HandlerResponse> => {
-  const name = event.queryStringParameters?.name ?? "World"
-  return { statusCode: 200, headers: { "content-type": "application/json" }, body: JSON.stringify({ name }) }
-})
+export default withLambda(
+    async (
+        event: HandlerEvent,
+        context: HandlerContext
+    ): Promise<HandlerResponse> => {
+        const name = event.queryStringParameters?.name ?? 'World'
+        return {
+            statusCode: 200,
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ name }),
+        }
+    }
+)
 ```
 
 Lambda-compat mode enforces the 4 KB env-var limit; [upgrade to modern functions](https://developers.netlify.com/guides/migrating-to-the-modern-netlify-functions/) to remove it.
 
 <!-- system: agent-context/functions/system.md — human-owned, merged by ctx-gen; edit system.md, not this section -->
+
 # Netlify house rules (functions)
 
 These are org conventions, not docs facts — they are merged into the rendered

@@ -72,10 +72,10 @@ On a new branch:
 
     ```typescript
     // db/index.ts
-    import { drizzle } from "drizzle-orm/netlify-db";
-    import * as schema from "./schema";
+    import { drizzle } from 'drizzle-orm/netlify-db'
+    import * as schema from './schema'
 
-    export const db = drizzle({ schema });
+    export const db = drizzle({ schema })
     ```
 
     > **Switching from the Netlify DB extension.** Replace `import { neon } from "@netlify/neon"` and any direct calls to `neon()` with the Drizzle adapter above. The `NETLIFY_DATABASE_URL` env var from the legacy extension is no longer read.
@@ -86,13 +86,13 @@ On a new branch:
 
     ```typescript
     // drizzle.config.ts
-    import { defineConfig } from "drizzle-kit";
+    import { defineConfig } from 'drizzle-kit'
 
     export default defineConfig({
-      dialect: "postgresql",
-      schema: "./db/schema.ts",
-      out: "netlify/database/migrations",
-    });
+        dialect: 'postgresql',
+        schema: './db/schema.ts',
+        out: 'netlify/database/migrations',
+    })
     ```
 
 3. Remove old-provider packages and any scripts that ran `drizzle-kit migrate` against explicit staging/production URLs. The GA product auto-applies schema migrations on every deploy.

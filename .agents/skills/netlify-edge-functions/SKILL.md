@@ -10,15 +10,15 @@ description: Write and configure Netlify Edge Functions — TypeScript/JavaScrip
 Export a default handler plus a `config` object. Import `Config`/`Context` types from `@netlify/edge-functions`; `Request`/`Response`/`URL` are global.
 
 ```ts
-import type { Config, Context } from "@netlify/edge-functions";
+import type { Config, Context } from '@netlify/edge-functions'
 
 export default async (request: Request, context: Context) => {
-  return new Response("Hello world");
-};
+    return new Response('Hello world')
+}
 
 export const config: Config = {
-  path: "/test",
-};
+    path: '/test',
+}
 ```
 
 **Do not hand-write an edge function when your framework's adapter already generates middleware for the job** — duplicating it causes conflicts. Check the framework adapter/reference first.
@@ -44,9 +44,9 @@ Edge functions are **not** auto-assigned a URL route. Configure via inline `conf
 
 ```ts
 export const config: Config = {
-  path: ["/", "/products/*"],
-  excludedPath: ["/*.css", "/*.js"],
-};
+    path: ['/', '/products/*'],
+    excludedPath: ['/*.css', '/*.js'],
+}
 ```
 
 Config properties: `path`, `excludedPath`, `pattern` (regex alternative to `path`), `excludedPattern`, `method`, `header`, `onError`, `cache`.
@@ -81,9 +81,13 @@ Properties: `function`, `path`, `excludedPath`, `pattern`, `excludedPattern`, `h
 
 ```ts
 export const config: Config = {
-  header: { "x-required": true, "x-forbidden": false, "user-agent": "(iPhone|Android)" },
-  path: "/*",
-};
+    header: {
+        'x-required': true,
+        'x-forbidden': false,
+        'user-agent': '(iPhone|Android)',
+    },
+    path: '/*',
+}
 ```
 
 ### Declaration processing order
@@ -100,6 +104,7 @@ To control order across multiple functions on a path, prefer `netlify.toml` decl
 After all functions run, Netlify evaluates redirect rules — unless a function returned a response and ended the chain. To customize order, use `netlify.toml`.
 
 **Order caveats:**
+
 - A returned response ends the chain; redirects for that path don't occur.
 - An edge function on the **target** of a static rewrite does **not** execute for rewritten requests.
 - `fetch()` for internal requests or returning a `URL` starts a **new request chain** and re-runs matching edge functions. Use `context.next()` to avoid re-running them.
@@ -107,6 +112,7 @@ After all functions run, Netlify evaluates redirect rules — unless a function 
 ## Function signature & return values
 
 Handler receives `(request: Request, context: Context)`. Return one of:
+
 - a `Response` — delivered to the client; **ends the request chain** (declared redirects for that path don't run).
 - a `URL` — rewrite to a **same-site** URL with 200 status; address bar unchanged. Same-site only — for other sites use `fetch`.
 - `undefined` / empty `return;` — bypass this function, continue the chain.
@@ -114,16 +120,16 @@ Handler receives `(request: Request, context: Context)`. Return one of:
 Modify a response as middleware by awaiting `context.next()`:
 
 ```ts
-import type { Context } from "@netlify/edge-functions";
+import type { Context } from '@netlify/edge-functions'
 
 export default async (request: Request, context: Context) => {
-  const url = new URL(request.url);
-  if (url.searchParams.get("method") !== "transform") return;
+    const url = new URL(request.url)
+    if (url.searchParams.get('method') !== 'transform') return
 
-  const response = await context.next();
-  const text = await response.text();
-  return new Response(text.toUpperCase(), response);
-};
+    const response = await context.next()
+    const text = await response.text()
+    return new Response(text.toUpperCase(), response)
+}
 ```
 
 Netlify does **not** add headers to edge function requests — use `context` for client request info.
@@ -131,54 +137,70 @@ Netlify does **not** add headers to edge function requests — use `context` for
 ## Common patterns
 
 **Redirect by geo + cookie:**
+
 ```ts
 export default async (req: Request, { cookies, geo }: Context) => {
-  if (geo.city === "Paris" && cookies.get("promo-code") === "15-for-followers") {
-    return Response.redirect(new URL("/subscriber-sale", req.url));
-  }
-};
+    if (
+        geo.city === 'Paris' &&
+        cookies.get('promo-code') === '15-for-followers'
+    ) {
+        return Response.redirect(new URL('/subscriber-sale', req.url))
+    }
+}
 ```
 
 **Rewrite (same-site, 200)** — return a standard `URL` object (see https://docs.netlify.com/build/edge-functions/api#return-a-rewrite):
+
 ```ts
 export default async (request: Request, { geo }: Context) => {
-  if (geo.city === "Paris") return new URL("/subscriber-sale", request.url);
-};
+    if (geo.city === 'Paris') return new URL('/subscriber-sale', request.url)
+}
 ```
 
 **Read request body then continue** — a body can only be read once, so pass a new `Request` with an unread body:
+
 ```ts
 export default async (req: Request, context: Context) => {
-  const body = await req.json();
-  if (!isValid(body.access_token)) return new Response("forbidden", { status: 403 });
-  return context.next(new Request(req, { body: JSON.stringify(body) }));
-};
+    const body = await req.json()
+    if (!isValid(body.access_token))
+        return new Response('forbidden', { status: 403 })
+    return context.next(new Request(req, { body: JSON.stringify(body) }))
+}
 ```
 
 **Conditional request:**
+
 ```ts
 export default async (req: Request, { next }: Context) => {
-  const res = await next({ sendConditionalRequest: true });
-  if (res.status === 304) return res;
-  const text = await res.text();
-  return new Response(text.toUpperCase(), res);
-};
+    const res = await next({ sendConditionalRequest: true })
+    if (res.status === 304) return res
+    const text = await res.text()
+    return new Response(text.toUpperCase(), res)
+}
 ```
 
 **SSR with React (`.tsx`):**
+
 ```tsx
-import React from "https://esm.sh/react";
-import { renderToReadableStream } from "https://esm.sh/react-dom/server";
-import type { Config, Context } from "@netlify/edge-functions";
+import React from 'https://esm.sh/react'
+import { renderToReadableStream } from 'https://esm.sh/react-dom/server'
+import type { Config, Context } from '@netlify/edge-functions'
 
 export default async function handler(req: Request, context: Context) {
-  const stream = await renderToReadableStream(
-    <html><body><h1>Hello {context.geo.country?.name}</h1></body></html>
-  );
-  return new Response(stream, { status: 200, headers: { "Content-Type": "text/html" } });
+    const stream = await renderToReadableStream(
+        <html>
+            <body>
+                <h1>Hello {context.geo.country?.name}</h1>
+            </body>
+        </html>
+    )
+    return new Response(stream, {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+    })
 }
 
-export const config: Config = { path: "/hello" };
+export const config: Config = { path: '/hello' }
 ```
 
 ## Context object
@@ -202,15 +224,15 @@ export const config: Config = { path: "/hello" };
 2. Set headers **inline in the function code** (not in `netlify.toml`):
 
 ```ts
-import type { Context, Config } from "@netlify/edge-functions";
+import type { Context, Config } from '@netlify/edge-functions'
 
 export default async (req: Request, context: Context) => {
-  return new Response("Hello world", {
-    headers: { "cache-control": "public, s-maxage=3600" },
-  });
-};
+    return new Response('Hello world', {
+        headers: { 'cache-control': 'public, s-maxage=3600' },
+    })
+}
 
-export const config: Config = { cache: "manual", path: "/hello" };
+export const config: Config = { cache: 'manual', path: '/hello' }
 ```
 
 Supported cache headers: `Cache-Control`, `CDN-Cache-Control`, `Netlify-CDN-Cache-Control`, `Expires` (overridden by `max-age`/`s-maxage`), `Vary`, `Netlify-Vary`. See https://docs.netlify.com/build/caching/caching-overview
@@ -228,7 +250,7 @@ Supported cache headers: `Cache-Control`, `CDN-Cache-Control`, `Netlify-CDN-Cach
 - **`bypass`** — skip the erroring function, continue the chain.
 
 ```ts
-export const config: Config = { path: "/hello", onError: "/unavailable" };
+export const config: Config = { path: '/hello', onError: '/unavailable' }
 ```
 
 Fail closed for critical logic (auth); fail open (`bypass`) for progressive enhancement (nice-to-have localization).
@@ -243,9 +265,9 @@ Fail closed for critical logic (auth); fail open (`bypass`) for progressive enha
 
 ```ts
 export default async (request: Request, context: Context) => {
-  const value = Netlify.env.get("MY_IMPORTANT_VARIABLE");
-  return new Response(`Value: ${value}`);
-};
+    const value = Netlify.env.get('MY_IMPORTANT_VARIABLE')
+    return new Response(`Value: ${value}`)
+}
 ```
 
 Next.js Middleware note: with Netlify Edge Functions for Middleware on Next.js, `process.env` also works.
@@ -253,6 +275,7 @@ Next.js Middleware note: with Netlify Edge Functions for Middleware on Next.js, 
 ## Runtime & modules
 
 Deno-based. Import modules by:
+
 - **Node built-ins:** `import { randomBytes } from "node:crypto";`
 - **Deno/URL imports:** `import React from "https://esm.sh/react";`
 - **npm packages (beta):** `npm install` then import by name. ⚠️ Beta — packages using native binaries (Prisma) or runtime dynamic imports (cowsay) may fail. Report bugs to Netlify Support: https://www.netlify.com/support/
@@ -299,6 +322,7 @@ netlify dev        # runs edge functions on local requests
 See the overview at https://docs.netlify.com/build/edge-functions/overview.md and the full example library at https://edge-functions-examples.netlify.app/. For feedback or help, contact Netlify Support: https://www.netlify.com/support/
 
 <!-- system: agent-context/edge-functions/system.md — human-owned, merged by ctx-gen; edit system.md, not this section -->
+
 # Netlify house rules (edge-functions)
 
 These are org conventions and field-learned guardrails, not docs facts — they
